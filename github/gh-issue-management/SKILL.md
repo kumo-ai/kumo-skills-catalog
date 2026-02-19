@@ -1,6 +1,6 @@
 ---
 name: gh-issue-management
-description: Manage GitHub issues using the gh CLI — create, assign, and organize parent/child (sub-issue) relationships. Use when the user asks to create tickets, reparent issues, flatten hierarchies, or manage issue relationships.
+description: Manage GitHub issues using the gh CLI — create, assign, and organize parent/child (sub-issue) relationships. Use when the user asks to create tickets, reparent issues, flatten hierarchies, or manage issue relationships. Includes a Customer Bug Report template specific to the kumoai/kumo repository.
 allowed-tools: [Bash]
 ---
 
@@ -135,6 +135,90 @@ gh api repos/{owner}/{repo}/issues/{source_parent}/sub_issue \
 gh api repos/{owner}/{repo}/issues/{target_parent}/sub_issues \
   --method POST --input - <<< '{"sub_issue_id": {dbid}}'
 ```
+
+### Create a Customer Bug Report
+
+> **Note:** This template is specific to the `kumoai/kumo` repository. It
+> mirrors the "Customer Bug Report" issue template defined in
+> `kumo/.github/ISSUE_TEMPLATE/bug-report.md`. Do not use this template
+> for other repositories — they have their own templates or none at all.
+
+Use this when filing a customer-facing bug. Gather the details from the
+user before creating the issue.
+
+```bash
+gh issue create --repo kumoai/kumo \
+  --title "[{customer_name}] {short_description}" \
+  --label "bug" \
+  --body "$(cat <<'EOF'
+**Prioritization**
+Are you completely blocked?
+- [{blocked}] Yes (and I tried any alternatives that can be tried, *e.g.* retrying, refreshing or trying different PQs.)
+- [{not_blocked}] No
+
+**Desired Resolution Timeframe**
+When do you need this resolved by?
+- [{asap}] ASAP
+- [{three_days}] 3 business days
+- [{five_days}] 5 business days
+- [{can_wait}] Can wait longer
+
+**Customer Type**
+- [{paid}] Paid customer
+- [{pov}] POV
+- [{workshop}] Workshop
+- [{free_trial}] Free trial
+
+**Customer Visible Bug**
+Has the customer seen this bug?
+- [{seen_yes}] Yes, the customer has seen it.
+- [{seen_no}] No, the customer hasn't seen it yet.
+- [{seen_unsure}] Not sure, the customer might see it soon or might have seen it already.
+
+**Description**
+
+What is happening?
+{what_is_happening}
+
+What is the expected behavior?
+{expected_behavior}
+
+Extent of user impact?
+{user_impact}
+
+**Steps to Reproduce**
+{steps_to_reproduce}
+
+**Environment Details (Cmd + D)**
+- Environment Name: {env_name}
+- Version: {version}
+- Version used for training: {training_version}
+- Job id: {job_id}
+- Link to the job page in the UI: {job_link}
+- Grafana Link: {grafana_link}
+- Temporal Link: {temporal_link}
+
+**Attachments**
+- Screenshots / Recordings: {screenshots}
+- Slack Thread: {slack_thread}
+- Logs: {logs}
+EOF
+)"
+```
+
+After creating the issue, add the appropriate priority label (`0 - Priority P0`,
+`1 - Priority P1`, or `2 - Priority P2`) and an area label (`ux`,
+`ml-algorithms`, `ml-infra`, or `data-platform`):
+
+```bash
+gh issue edit {number} --repo kumoai/kumo \
+  --add-label "{priority_label}" \
+  --add-label "{area_label}"
+```
+
+Use `x` for selected checkboxes and a space for unselected ones. For example,
+if the customer is blocked and it's a paid customer: `blocked=x`,
+`not_blocked= `, `paid=x`, `pov= `, etc.
 
 ### Create an issue and attach it as a sub-issue
 
