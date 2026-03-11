@@ -4,6 +4,7 @@ metadata:
   version: "1.0.0"
 description: Scaffold a new VPC/BYOC customer workspace from scratch. Creates repo structure, generates all config files, clones child repos, and registers in Notion.
 allowed-tools: Bash Read Write Edit Grep Glob Agent
+disable-model-invocation: true
 ---
 
 # Initialize VPC Workspace
