@@ -286,12 +286,15 @@ body:
 
 ### 8f: `.agents/scripts/sync-skills-catalog.py`
 
-Copy the sync script from the current workspace. Run:
+Download the sync script directly from the catalog repo:
 ```bash
-cp <source-workspace>/.agents/scripts/sync-skills-catalog.py .agents/scripts/sync-skills-catalog.py
+mkdir -p .agents/scripts
+curl -fsSL https://raw.githubusercontent.com/kumo-ai/kumo-skills-catalog/master/sync-skills-catalog.py \
+  -o .agents/scripts/sync-skills-catalog.py
+chmod +x .agents/scripts/sync-skills-catalog.py
 ```
 
-If the source workspace is not available, tell the user they need to manually copy `sync-skills-catalog.py` from an existing workspace or the `kumo-skills-catalog` repo.
+If the download fails (e.g. no network), tell the user they can copy it manually from an existing workspace or the `kumo-skills-catalog` repo later.
 
 ### 8g: `.agents/skills/file-env-ticket/SKILL.md`
 
@@ -487,9 +490,14 @@ Report the Notion page URL.
 
 ## Step 12: Skills Catalog
 
-Ask: "Sync the shared skills catalog? (yes/skip)"
+Ask: "Set up the shared skills catalog? (yes/skip)"
 
-If yes, run `python3 .agents/scripts/sync-skills-catalog.py --init`.
+If yes:
+1. Clone the catalog: `python3 .agents/scripts/sync-skills-catalog.py --init`
+2. Show available skills: `python3 .agents/scripts/sync-skills-catalog.py --list`
+3. Ask: "Which skills would you like to install? (enter names separated by spaces, or 'all' for everything, or 'skip')"
+4. If they provide names, run: `python3 .agents/scripts/sync-skills-catalog.py --add <name1> <name2> ...`
+5. If they say 'all', install every skill listed by `--list`.
 
 ## Step 13: Initial Commit
 
