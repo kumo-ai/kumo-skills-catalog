@@ -23,16 +23,21 @@ Auto-derive `WORKSPACE_NAME` from the current directory basename. Verify it matc
 Check if the current directory is already a git repo (`git rev-parse --git-dir`).
 
 If not, ask: "Create a GitHub repo for this workspace? (yes/skip)"
-- If yes: run `git init`, then `gh repo create kumo-ai/${CUSTOMER_SHORT}-workspace --private --source=. --push`
+- If yes:
+  1. First, verify the user is authenticated with the GitHub CLI by running `gh auth status`. If not authenticated, ask the user to run `gh auth login` and wait for them to confirm before proceeding.
+  2. Run `git init`, then `gh repo create kumo-ai/${CUSTOMER_SHORT}-workspace --private --source=. --push`
 - If skip: just run `git init`
 
 If already a git repo, note it and move on.
 
 Store the remote URL (from `git remote get-url origin`) as `REPO_URL` for later use. Convert SSH URLs to HTTPS format for Notion links.
 
-## Step 3: Azure / Cluster Configuration
+## Step 3: Cloud / Cluster Configuration
 
-Ask the user (each skippable):
+Ask the user: "Which cloud provider? (azure/aws/gcp/other/skip)" → `CLOUD_PROVIDER`
+
+### If Azure:
+Ask (each skippable):
 - "Azure subscription ID:" → `AZURE_SUBSCRIPTION_ID`
 - "AKS resource group name:" → `AKS_RESOURCE_GROUP`
 - "AKS cluster name:" → `AKS_CLUSTER_NAME`
@@ -44,7 +49,33 @@ az aks get-credentials --resource-group <AKS_RESOURCE_GROUP> --name <AKS_CLUSTER
 kubelogin convert-kubeconfig -l azurecli
 ```
 
-If skipped, create `runbook/` directory but leave `k8s.sh` empty with a TODO comment.
+### If AWS:
+Ask (each skippable):
+- "AWS region (e.g., us-east-1):" → `AWS_REGION`
+- "EKS cluster name:" → `EKS_CLUSTER_NAME`
+- "AWS profile (leave blank for default):" → `AWS_PROFILE`
+
+If cluster name and region are provided, generate `runbook/k8s.sh`:
+```bash
+aws eks update-kubeconfig --region <AWS_REGION> --name <EKS_CLUSTER_NAME> <--profile AWS_PROFILE if provided>
+```
+
+### If GCP:
+Ask (each skippable):
+- "GCP project ID:" → `GCP_PROJECT_ID`
+- "GKE cluster name:" → `GKE_CLUSTER_NAME`
+- "GKE zone or region (e.g., us-central1-a):" → `GKE_LOCATION`
+
+If all three are provided, generate `runbook/k8s.sh`:
+```bash
+gcloud container clusters get-credentials <GKE_CLUSTER_NAME> --project <GCP_PROJECT_ID> --region <GKE_LOCATION>
+```
+
+### If other:
+Ask the user to describe how to obtain cluster credentials, then generate `runbook/k8s.sh` with the commands they provide.
+
+### If skipped:
+Create `runbook/` directory but leave `k8s.sh` empty with a TODO comment.
 
 ## Step 4: Corporate Proxy
 
@@ -145,7 +176,7 @@ Operational knowledge for the <CUSTOMER_NAME> BYOC environment — contacts, esc
 
 | Area | Who | Channel |
 |------|-----|---------|
-| Cluster access / Azure | _TBD_ | _TBD_ |
+| Cluster access / Cloud | _TBD_ | _TBD_ |
 | Kumo platform issues | _TBD_ | _TBD_ |
 | Networking / egress | _TBD_ | _TBD_ |
 
@@ -344,7 +375,7 @@ Return the catalog issue URL to the user.
 Generate an onboard skill tailored to this customer. Include steps for:
 1. Clone repos — check if each repo from Step 7 exists, offer to clone missing ones
 2. Corporate proxy — only include if `HAS_PROXY` is yes
-3. Azure login — ask user to run `az login`
+3. Cloud auth — ask user to authenticate with their cloud provider (based on `CLOUD_PROVIDER`)
 4. Cluster access — run `bash runbook/k8s.sh` if it was generated
 5. Credentials — copy `.env.example`, ask for Kumo API key, Notion keys
 6. Notion registration — create entry in VPC Customers database if creds configured
@@ -380,7 +411,7 @@ Run `./setup.sh` after cloning this workspace to clone all child repos.
 
 Before running any kubectl or k8s commands:
 1. Ensure Twingate is turned off.
-2. Run `az login` to authenticate with Azure.
+2. Authenticate with your cloud provider (e.g., `az login` for Azure, `aws sso login` for AWS, `gcloud auth login` for GCP).
 <3. proxy line — only if HAS_PROXY is yes>
 
 ## Credentials
