@@ -1,7 +1,7 @@
 ---
 name: init-vpc-workspace
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
 description: Scaffold a new VPC/BYOC customer workspace from scratch. Creates repo structure, generates all config files, clones child repos, and registers in Notion.
 allowed-tools: Bash Read Write Edit Grep Glob Agent
 disable-model-invocation: true
@@ -161,11 +161,11 @@ credentials/.env
 # Kumo API key (from the Kumo UI under Settings > API Keys)
 KUMO_API_KEY=
 
-# Notion integration token (from https://www.notion.so/my-integrations)
+# REQUIRED: Notion integration token (from https://www.notion.so/my-integrations)
 NOTION_API_KEY=
 
-# Notion database ID where workspace entries are tracked.
-NOTION_DATABASE_ID=
+# VPC Customers database — do not change.
+NOTION_DATABASE_ID=31fcc5e93e38803dbb9bc6ad7897e885
 ```
 
 ### 8c: `ops-guide/README.md`
@@ -450,13 +450,17 @@ Create:
 
 ## Step 9: Credentials
 
-Ask: "Configure credentials now? (yes/skip)"
+Ensure `credentials/.env` exists (copy from `.env.example`).
 
-If yes:
-- Ensure `credentials/.env` exists (copy from `.env.example`)
-- Ask for Kumo API key (skippable)
-- Ask for Notion API key (skippable)
-- Ask for Notion database ID (skippable)
+**Notion API key is mandatory** — the workspace cannot register in the VPC Customers database or function correctly without it. Do NOT allow the user to skip this:
+- Ask for Notion API key → `NOTION_API_KEY` **(required — do not proceed until provided)**
+
+If the user tries to skip, explain: "Notion API key is required for workspace registration and tracking. You can create a Notion integration at https://www.notion.so/my-integrations."
+
+The Notion database ID is always `31fcc5e93e38803dbb9bc6ad7897e885` (the shared VPC Customers database). Hardcode this as `NOTION_DATABASE_ID` — do not ask the user for it.
+
+Other credentials are optional:
+- Ask for Kumo API key (skippable) → `KUMO_API_KEY`
 
 Write values into `credentials/.env`.
 
@@ -468,7 +472,7 @@ If yes, ask for each contact area (who + channel), update `ops-guide/README.md`.
 
 ## Step 11: Notion Registration
 
-If `NOTION_API_KEY` and `NOTION_DATABASE_ID` are configured in `credentials/.env`, ask: "Register this workspace in the VPC Customers Notion database? (yes/skip)"
+Since `NOTION_API_KEY` was configured in Step 9, ask: "Register this workspace in the VPC Customers Notion database? (yes/skip)"
 
 If yes, create a Notion page via REST API:
 ```bash
