@@ -10,8 +10,8 @@ HEADER = """\
 
 Reusable [agentskills.io](https://agentskills.io) skills for Claude Code and Codex agents working with Kumo infrastructure.
 
-| Domain | Skill | Description |
-|--------|-------|-------------|
+| Domain | Skill | Version | Description |
+|--------|-------|---------|-------------|
 """
 
 
@@ -41,11 +41,13 @@ def main():
         description = fm.get("description", "")
         # Trim description to first sentence for table readability
         first_sentence = re.split(r"(?<=\.)\s", description, maxsplit=1)[0]
-        skills.append((domain, name, str(rel), first_sentence))
+        version = fm.get("version", "")
+        skills.append((domain, name, str(rel), version, first_sentence))
 
     rows = []
-    for domain, name, rel_path, desc in skills:
-        rows.append(f"| {domain} | [{name}]({rel_path}) | {desc} |")
+    for domain, name, rel_path, version, desc in skills:
+        version_badge = f"`{version}`" if version else ""
+        rows.append(f"| {domain} | [{name}]({rel_path}) | {version_badge} | {desc} |")
 
     readme = HEADER + "\n".join(rows) + "\n"
     readme_path = REPO_ROOT / "README.md"

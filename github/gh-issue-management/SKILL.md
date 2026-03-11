@@ -1,5 +1,6 @@
 ---
 name: gh-issue-management
+version: 1.0.0
 description: Manage GitHub issues using the gh CLI — create, assign, and organize parent/child (sub-issue) relationships. Use when the user asks to create tickets, reparent issues, flatten hierarchies, or manage issue relationships.
 allowed-tools: [Bash]
 ---

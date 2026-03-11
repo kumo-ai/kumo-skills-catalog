@@ -1,3 +1,10 @@
+---
+name: learn-diff
+version: 0.1.0-alpha
+description: Walk through a GitHub PR for learning purposes — explaining code, answering inline comments, generating diagrams, and demonstrating bugs with runnable scripts.
+allowed-tools: [Bash, Read, Grep, Glob, Agent, Write, Edit, AskUserQuestion, WebFetch]
+---
+
 # /learn-diff — Educational Diff Walkthrough
 
 Invoked as `/learn-diff <PR-URL-or-number>`. This skill walks through a GitHub PR for learning purposes: explaining code, answering inline comments, generating ASCII workflow diagrams, and demonstrating bugs with runnable scripts. This is NOT a code review — the goal is to help the user understand the diff.

@@ -20,8 +20,10 @@ Works with both Claude Code and Codex.
 """
 import json
 import os
+import re
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 CATALOG_REPO_NAME = "kumo-skills-catalog"
@@ -29,9 +31,23 @@ CATALOG_CLONE_URL = "https://github.com/kumo-ai/kumo-skills-catalog.git"
 
 
 def get_project_root():
+    # 1. Explicit env var (set by Claude Code / Codex)
     if "CLAUDE_PROJECT_DIR" in os.environ:
         return Path(os.environ["CLAUDE_PROJECT_DIR"])
-    return Path(__file__).parent.parent.parent
+    # 2. Walk up from the script's location to find a git root with .agents/
+    candidate = Path(__file__).resolve().parent
+    while candidate != candidate.parent:
+        if (candidate / ".git").exists() and (candidate / ".agents").is_dir():
+            return candidate
+        candidate = candidate.parent
+    # 3. Walk up from cwd
+    candidate = Path.cwd()
+    while candidate != candidate.parent:
+        if (candidate / ".git").exists() and (candidate / ".agents").is_dir():
+            return candidate
+        candidate = candidate.parent
+    # 4. Last resort
+    return Path.cwd()
 
 
 def find_catalog(project_root: Path) -> Path | None:
@@ -53,6 +69,20 @@ def find_catalog(project_root: Path) -> Path | None:
                 return candidate
 
     return None
+
+
+def parse_frontmatter(skill_md: Path) -> dict:
+    """Extract YAML frontmatter fields from a SKILL.md file."""
+    text = skill_md.read_text()
+    m = re.match(r"^---\s*\n(.*?)\n---", text, re.DOTALL)
+    if not m:
+        return {}
+    fm = {}
+    for line in m.group(1).splitlines():
+        key, _, value = line.partition(":")
+        if value:
+            fm[key.strip()] = value.strip()
+    return fm
 
 
 def discover_catalog_skills(catalog_root: Path) -> dict[str, Path]:
@@ -322,7 +352,35 @@ def pull_catalog(catalog_root: Path) -> str | None:
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
+HELP_TEXT = """\
+Usage: sync-skills-catalog.py [OPTIONS]
+
+Manage skills from the shared kumo-skills-catalog.
+
+Options:
+  --init              Clone the catalog (if missing) and sync installed skills.
+  --pull              Pull latest catalog, then re-sync installed skills.
+  --list              List all available skills in the catalog.
+  --add <name> ...    Install one or more skills from the catalog.
+  --remove <name> ... Uninstall one or more catalog skills.
+  --reset             Remove all catalog symlinks and clear the manifest.
+  --help, -h          Show this help message.
+  (no args)           Re-sync installed skills only.
+
+Examples:
+  sync-skills-catalog.py --init
+  sync-skills-catalog.py --list
+  sync-skills-catalog.py --add k8s-egress-diagnose init-vpc-workspace
+  sync-skills-catalog.py --remove k8s-egress-diagnose
+  sync-skills-catalog.py --reset
+"""
+
+
 def main():
+    if "--help" in sys.argv or "-h" in sys.argv:
+        print(HELP_TEXT, end="")
+        return
+
     pull_mode = "--pull" in sys.argv
     init_mode = "--init" in sys.argv
     list_mode = "--list" in sys.argv
@@ -373,8 +431,8 @@ def main():
               file=sys.stderr)
         sys.exit(1)
 
-    # Pull latest if requested
-    if (pull_mode or init_mode) and not pull_summary:
+    # Pull latest if requested (--pull, --init, or --list always pull)
+    if (pull_mode or init_mode or list_mode) and not pull_summary:
         pull_summary = pull_catalog(catalog)
 
     catalog_skills = discover_catalog_skills(catalog)
@@ -385,12 +443,31 @@ def main():
         if not catalog_skills:
             print("No skills found in catalog.")
             return
-        print("Available skills in catalog:")
+
+        # Gather metadata for each skill
+        entries = []
         for name in sorted(catalog_skills):
-            # Show relative path within catalog for context
-            rel = catalog_skills[name].relative_to(catalog)
-            marker = " [installed]" if name in installed else ""
-            print(f"  {name:30s} ({rel}){marker}")
+            skill_dir = catalog_skills[name]
+            fm = parse_frontmatter(skill_dir / "SKILL.md")
+            version = fm.get("version", "—")
+            desc = fm.get("description", "")
+            marker = "*" if name in installed else " "
+            entries.append((marker, name, version, desc))
+
+        # Column widths
+        name_w = max(len(e[1]) for e in entries)
+        ver_w = max(len(e[2]) for e in entries)
+        # Description wraps to fit within 80 cols
+        desc_w = max(20, 80 - 4 - name_w - 3 - ver_w - 3)
+        indent = " " * (4 + name_w + 3 + ver_w + 3)
+
+        print("Available skills in catalog (* = installed):\n")
+        for marker, name, version, desc in entries:
+            wrapped = textwrap.wrap(desc, width=desc_w) or [""]
+            first_line = wrapped[0]
+            print(f"  {marker} {name:<{name_w}}   {version:<{ver_w}}   {first_line}")
+            for cont in wrapped[1:]:
+                print(f"{indent}{cont}")
         return
 
     # ── Add ──────────────────────────────────────────────────────────────
