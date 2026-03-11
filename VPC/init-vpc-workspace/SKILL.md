@@ -394,7 +394,7 @@ Each step skippable. Finish with a summary checklist.
 Generate a lightweight setup script for teammates joining an existing workspace. It should:
 1. Clone any missing child repos (from the URLs collected in Step 7) — for each, check if directory exists before cloning
 2. Credentials section (y/N gate): copy `.env.example`, ask for Kumo/Notion keys
-3. Notion registration (if credentials present): create entry with customer name, repo URL, Stage=Setup
+3. Notion registration (if credentials present): ask the user for stage (POC / PROD / OTHERS), then create entry with customer name, repo URL, and selected stage
 
 ### 8j: `CLAUDE.md`
 
@@ -474,7 +474,10 @@ If yes, ask for each contact area (who + channel), update `ops-guide/README.md`.
 
 Since `NOTION_API_KEY` was configured in Step 9, ask: "Register this workspace in the VPC Customers Notion database? (yes/skip)"
 
-If yes, create a Notion page via REST API:
+If yes:
+1. Ask: "What stage is this customer in? (POC / PROD / OTHERS)" → `STAGE`
+   - Only accept one of: `POC`, `PROD`, `OTHERS`. If the user enters something else, re-prompt.
+2. Create a Notion page via REST API:
 ```bash
 curl -s -X POST https://api.notion.com/v1/pages \
   -H "Authorization: Bearer $NOTION_API_KEY" \
@@ -485,7 +488,7 @@ curl -s -X POST https://api.notion.com/v1/pages \
   "properties": {
     "Name": {"title": [{"text": {"content": "<CUSTOMER_SHORT>"}}]},
     "Context Repo": {"url": "<REPO_URL>"},
-    "Stage": {"select": {"name": "Setup"}}
+    "Stage": {"select": {"name": "<STAGE>"}}
   }
 }'
 ```
