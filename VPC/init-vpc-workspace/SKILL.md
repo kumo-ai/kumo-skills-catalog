@@ -1,8 +1,9 @@
 ---
 name: init-vpc-workspace
-version: 1.0.0
+metadata:
+  version: "1.0.0"
 description: Scaffold a new VPC/BYOC customer workspace from scratch. Creates repo structure, generates all config files, clones child repos, and registers in Notion.
-allowed-tools: Bash, Read, Write, Edit, Grep, Glob, Agent
+allowed-tools: Bash Read Write Edit Grep Glob Agent
 ---
 
 # Initialize VPC Workspace
@@ -299,7 +300,7 @@ Generate the file-env-ticket skill, parameterized with the workspace repo name (
 ---
 name: file-env-ticket
 description: File a debug-log issue in the <CUSTOMER_SHORT>-workspace issue catalog to track a debugging session or environment investigation.
-allowed-tools: Bash, Read, Grep, Glob, Agent
+allowed-tools: Bash Read Grep Glob Agent
 ---
 
 # File Environment Ticket

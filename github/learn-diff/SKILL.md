@@ -1,8 +1,9 @@
 ---
 name: learn-diff
-version: 0.1.0-alpha
+metadata:
+  version: "0.1.0-alpha"
 description: Walk through a GitHub PR for learning purposes — explaining code, answering inline comments, generating diagrams, and demonstrating bugs with runnable scripts.
-allowed-tools: [Bash, Read, Grep, Glob, Agent, Write, Edit, AskUserQuestion, WebFetch]
+allowed-tools: Bash Read Grep Glob Agent Write Edit AskUserQuestion WebFetch
 ---
 
 # /learn-diff — Educational Diff Walkthrough

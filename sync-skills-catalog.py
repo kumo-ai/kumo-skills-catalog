@@ -72,16 +72,36 @@ def find_catalog(project_root: Path) -> Path | None:
 
 
 def parse_frontmatter(skill_md: Path) -> dict:
-    """Extract YAML frontmatter fields from a SKILL.md file."""
+    """Extract YAML frontmatter fields from a SKILL.md file.
+
+    Handles one level of nesting (e.g. metadata.version) by flattening
+    nested keys with a dot separator.
+    """
     text = skill_md.read_text()
     m = re.match(r"^---\s*\n(.*?)\n---", text, re.DOTALL)
     if not m:
         return {}
     fm = {}
+    current_parent = None
     for line in m.group(1).splitlines():
+        # Detect indented child lines (e.g. "  version: 1.0")
+        stripped = line.lstrip()
+        indent = len(line) - len(stripped)
+        if indent > 0 and current_parent and ":" in stripped:
+            key, _, value = stripped.partition(":")
+            if value.strip():
+                fm[f"{current_parent}.{key.strip()}"] = value.strip().strip('"')
+            continue
         key, _, value = line.partition(":")
-        if value:
-            fm[key.strip()] = value.strip()
+        key = key.strip()
+        if not key:
+            continue
+        if value.strip():
+            fm[key] = value.strip()
+            current_parent = None
+        else:
+            # Key with no value — start of a nested block
+            current_parent = key
     return fm
 
 
@@ -449,7 +469,7 @@ def main():
         for name in sorted(catalog_skills):
             skill_dir = catalog_skills[name]
             fm = parse_frontmatter(skill_dir / "SKILL.md")
-            version = fm.get("version", "—")
+            version = fm.get("metadata.version", fm.get("version", "—"))
             desc = fm.get("description", "")
             marker = "*" if name in installed else " "
             entries.append((marker, name, version, desc))

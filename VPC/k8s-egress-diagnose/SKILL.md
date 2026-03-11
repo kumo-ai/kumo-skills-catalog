@@ -1,8 +1,9 @@
 ---
 name: k8s-egress-diagnose
-version: 1.0.0
+metadata:
+  version: "1.0.0"
 description: This skill should be used when the user reports pod connectivity issues, timeout errors reaching external endpoints, "connection timed out", "max retries exceeded", or network problems from within Kubernetes pods.
-allowed-tools: [Bash, Read, Grep, Glob]
+allowed-tools: Bash Read Grep Glob
 ---
 
 # Kubernetes Pod Egress Connectivity Diagnosis
