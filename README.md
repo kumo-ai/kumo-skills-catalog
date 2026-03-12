@@ -2,6 +2,39 @@
 
 Reusable [agentskills.io](https://agentskills.io) skills for Claude Code and Codex agents working with Kumo infrastructure.
 
+## Installation
+
+From your project root:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kumo-ai/kumo-skills-catalog/master/install.sh | bash
+```
+
+### Managing skills
+
+After installation, use the sync script directly:
+
+```bash
+# List available skills
+python3 .agents/scripts/sync-skills-catalog.py --list
+
+# Install skills
+python3 .agents/scripts/sync-skills-catalog.py --add <skill-name>
+
+# Remove skills
+python3 .agents/scripts/sync-skills-catalog.py --remove <skill-name>
+
+# Pull latest updates
+python3 .agents/scripts/sync-skills-catalog.py --pull
+
+# Uninstall everything
+python3 .agents/scripts/sync-skills-catalog.py --reset
+```
+
+Installed skills are symlinked into `.agents/skills/` and registered as Claude Code slash commands in `.claude/commands/`.
+
+## Available Skills
+
 | Domain | Skill | Version | Description |
 |--------|-------|---------|-------------|
 | VPC | [init-vpc-workspace](VPC/init-vpc-workspace/SKILL.md) | `"1.0.1"` | Scaffold a new VPC/BYOC customer workspace from scratch. |
