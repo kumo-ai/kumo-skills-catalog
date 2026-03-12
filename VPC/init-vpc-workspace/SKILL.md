@@ -458,7 +458,7 @@ Ensure `credentials/.env` exists (copy from `.env.example`).
 **Notion API key is mandatory** — the workspace cannot register in the VPC Customers database or function correctly without it. Do NOT allow the user to skip this:
 - Ask for Notion API key → `NOTION_API_KEY` **(required — do not proceed until provided)**
 
-If the user tries to skip, explain: "Notion API key is required for workspace registration and tracking. You can create a Notion integration at https://www.notion.so/my-integrations."
+If the user tries to skip, explain: "Notion API key is required for workspace registration and tracking. You can create a Notion integration at https://www.notion.so/my-integrations, or grab the shared token from 1Password: https://start.1password.com/open/i?a=BOTF4QWPWFAUNIAYMWXORJSXYI&v=bdkdupbwm4bjpv72pnbata5qba&i=kbgeh44526e4ojvmirzfnk5njq&h=team-kumo.1password.com"
 
 The Notion database ID is always `31fcc5e93e38803dbb9bc6ad7897e885` (the shared VPC Customers database). Hardcode this as `NOTION_DATABASE_ID` — do not ask the user for it.
 
