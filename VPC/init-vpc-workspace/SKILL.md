@@ -18,6 +18,9 @@ Scaffold a complete VPC/BYOC customer workspace in the current directory. Walk t
 Ask the user:
 - "Customer name (e.g., Procter & Gamble):" → `CUSTOMER_NAME`
 - "Short identifier (e.g., pandg — used in repo names and Notion):" → `CUSTOMER_SHORT`
+- "Deployment type — BYOC or BYOK? (BYOC/BYOK):" → `DEPLOYMENT_TYPE` **(required — do not proceed until answered)**
+
+If the user tries to skip `DEPLOYMENT_TYPE`, explain: "Deployment type is required for Notion registration. BYOC = Bring Your Own Cloud, BYOK = Bring Your Own Kubernetes."
 
 Auto-derive `WORKSPACE_NAME` from the current directory basename. Verify it matches `<CUSTOMER_SHORT>-workspace`. If not, warn the user and ask if they want to proceed anyway.
 
@@ -394,7 +397,7 @@ Each step skippable. Finish with a summary checklist.
 Generate a lightweight setup script for teammates joining an existing workspace. It should:
 1. Clone any missing child repos (from the URLs collected in Step 7) — for each, check if directory exists before cloning
 2. Credentials section (y/N gate): copy `.env.example`, ask for Kumo/Notion keys
-3. Notion registration (if credentials present): ask the user for stage (POC / PROD / OTHERS), then create entry with customer name, repo URL, and selected stage
+3. Notion registration (if credentials present): ask the user for stage (POC / PROD / OTHERS), then create entry with customer name, repo URL, selected stage, and Deployment type
 
 ### 8j: `CLAUDE.md`
 
@@ -488,7 +491,8 @@ curl -s -X POST https://api.notion.com/v1/pages \
   "properties": {
     "Name": {"title": [{"text": {"content": "<CUSTOMER_SHORT>"}}]},
     "Context Repo": {"url": "<REPO_URL>"},
-    "Stage": {"select": {"name": "<STAGE>"}}
+    "Stage": {"select": {"name": "<STAGE>"}},
+    "Deployment": {"select": {"name": "<DEPLOYMENT_TYPE>"}}
   }
 }'
 ```
