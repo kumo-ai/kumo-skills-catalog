@@ -505,10 +505,15 @@ Ask: "Set up the shared skills catalog? (yes/skip)"
 
 If yes:
 1. Clone the catalog: `python3 .agents/scripts/sync-skills-catalog.py --init`
-2. Show available skills: `python3 .agents/scripts/sync-skills-catalog.py --list`
-3. Ask: "Which skills would you like to install? (enter names separated by spaces, or 'all' for everything, or 'skip')"
-4. If they provide names, run: `python3 .agents/scripts/sync-skills-catalog.py --add <name1> <name2> ...`
-5. If they say 'all', install every skill listed by `--list`.
+2. Install default skills automatically:
+   ```bash
+   python3 .agents/scripts/sync-skills-catalog.py --add file-feature-request
+   ```
+   Report: "Installed default skill: file-feature-request"
+3. Show remaining available skills: `python3 .agents/scripts/sync-skills-catalog.py --list`
+4. Ask: "Install additional skills? (enter names separated by spaces, or 'all' for everything, or 'skip')"
+5. If they provide names, run: `python3 .agents/scripts/sync-skills-catalog.py --add <name1> <name2> ...`
+6. If they say 'all', install every skill listed by `--list`.
 
 ## Step 13: Initial Commit
 
