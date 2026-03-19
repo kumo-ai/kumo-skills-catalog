@@ -38,7 +38,7 @@ Installed skills are symlinked into `.agents/skills/` and registered as Claude C
 | Domain | Skill | Version | Description |
 |--------|-------|---------|-------------|
 | VPC | [file-feature-request](VPC/file-feature-request/SKILL.md) | `"1.0.0"` | File a feature-request issue in the current VPC workspace repo, linked to an upstream kumo-ai/kumo issue. |
-| VPC | [init-vpc-workspace](VPC/init-vpc-workspace/SKILL.md) | `"1.1.0"` | Scaffold a new VPC/BYOC customer workspace from scratch. |
+| VPC | [init-vpc-workspace](VPC/init-vpc-workspace/SKILL.md) | `"1.2.0"` | Scaffold a new VPC/BYOC customer workspace from scratch. |
 | VPC | [k8s-egress-diagnose](VPC/k8s-egress-diagnose/SKILL.md) | `"1.0.0"` | This skill should be used when the user reports pod connectivity issues, timeout errors reaching external endpoints, "connection timed out", "max retries exceeded", or network problems from within Kubernetes pods. |
 | VPC | [vpc-temporal-doctor](VPC/vpc-temporal-doctor/SKILL.md) | `"1.0.0"` | Diagnose Temporal health in a BYOC cluster — query workflows by status, analyze timeouts and failures, check resource utilization, and surface performance problems. |
 | github | [gh-issue-management](github/gh-issue-management/SKILL.md) | `"1.0.0"` | Manage GitHub issues using the gh CLI — create, assign, and organize parent/child (sub-issue) relationships. |
