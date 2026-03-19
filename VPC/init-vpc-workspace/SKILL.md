@@ -392,14 +392,51 @@ Generate an onboard skill tailored to this customer. Include steps for:
 
 Each step skippable. Finish with a summary checklist.
 
-### 8i: `setup.sh`
+### 8i: `.claude/commands/doctor.md`
+
+Generate a doctor skill that checks whether the workspace is fully set up. It should verify each item from `/onboard` and report what's missing or broken.
+
+Checks to run (in order):
+
+1. **Child repos** — for each repo from Step 7, check if the directory exists. Report missing repos with the clone command to fix.
+2. **Corporate proxy** — only if `HAS_PROXY` is yes: check if `runbook/proxy.sh` exists and that `http_proxy` / `https_proxy` are set in the current environment. Report if proxy script is missing or env vars are unset.
+3. **Cloud auth** — based on `CLOUD_PROVIDER`:
+   - Azure: run `az account show` and check exit code
+   - AWS: run `aws sts get-caller-identity` and check exit code
+   - GCP: run `gcloud auth print-identity-token` and check exit code
+   Report if not authenticated, with the login command to fix.
+4. **Cluster access** — check if `runbook/k8s.sh` exists, then run `kubectl cluster-info` and check exit code. Report if kubeconfig is missing or cluster is unreachable.
+5. **Credentials** — check if `credentials/.env` exists and contains non-empty values for `NOTION_API_KEY`. Warn if file is missing or key is empty. Also check `KUMO_API_KEY` but only as a warning (optional).
+6. **Notion registration** — if `NOTION_API_KEY` is set, query the VPC Customers database for an entry matching `<CUSTOMER_SHORT>`. Report if no entry is found, with the command to register.
+7. **Skills catalog** — check if `.agents/skills-catalog/` exists and if `installed.txt` has at least one entry. Report if catalog is not cloned or no skills are installed.
+
+Output format:
+
+```
+## Workspace Health Check
+
+| Check               | Status | Details                          |
+|---------------------|--------|----------------------------------|
+| Child repos         | PASS/FAIL | X of Y cloned                |
+| Proxy config        | PASS/FAIL/SKIP | ...                     |
+| Cloud auth          | PASS/FAIL | ...                           |
+| Cluster access      | PASS/FAIL | ...                           |
+| Credentials         | PASS/FAIL | ...                           |
+| Notion registration | PASS/FAIL | ...                           |
+| Skills catalog      | PASS/FAIL | ...                           |
+
+### Fixes needed
+<numbered list of commands to run for each FAIL, or "All checks passed!" if none>
+```
+
+### 8j: `setup.sh`
 
 Generate a lightweight setup script for teammates joining an existing workspace. It should:
 1. Clone any missing child repos (from the URLs collected in Step 7) — for each, check if directory exists before cloning
 2. Credentials section (y/N gate): copy `.env.example`, ask for Kumo/Notion keys
 3. Notion registration (if credentials present): ask the user for stage (POC / PROD / OTHERS), then create entry with customer name, repo URL, selected stage, and Deployment type
 
-### 8j: `CLAUDE.md`
+### 8k: `CLAUDE.md`
 
 Generate the full CLAUDE.md assembled from all collected values. Structure:
 
@@ -407,6 +444,7 @@ Generate the full CLAUDE.md assembled from all collected values. Structure:
 # <CUSTOMER_NAME> BYOC Environment
 
 New here? Run `/onboard` to get set up interactively.
+Something not working? Run `/doctor` to check what's missing.
 
 ## Workspace Layout
 <tree showing credentials/, ops-guide/, runbook/, setup.sh, and all repos from Step 7>
@@ -444,11 +482,12 @@ This repo's GitHub Issues (`kumo-ai/<CUSTOMER_SHORT>-workspace`) serves as a sea
 <same as current, generic>
 ```
 
-### 8k: Symlinks
+### 8l: Symlinks
 
 Create:
 - `AGENTS.md -> CLAUDE.md`
 - `README.md -> CLAUDE.md`
+- `.claude/commands/doctor.md` (generated directly in Step 8i)
 - `.claude/commands/file-env-ticket.md -> ../../.agents/skills/file-env-ticket/SKILL.md`
 
 ## Step 9: Credentials
