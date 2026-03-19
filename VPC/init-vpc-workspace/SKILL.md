@@ -1,7 +1,7 @@
 ---
 name: init-vpc-workspace
 metadata:
-  version: "1.0.1"
+  version: "1.1.0"
 description: Scaffold a new VPC/BYOC customer workspace from scratch. Creates repo structure, generates all config files, clones child repos, and registers in Notion.
 allowed-tools: Bash Read Write Edit Grep Glob Agent
 disable-model-invocation: true
@@ -118,7 +118,21 @@ If yes, ask: "Describe the steps (paste multiline, then type END on a new line):
 
 Collect into `UPGRADE_PROCEDURE`. This becomes a section in CLAUDE.md.
 
-## Step 7: Repos
+## Step 7: Architecture
+
+Ask: "Document the deployment architecture? (yes/skip)"
+
+If yes, walk the user through the following (each sub-question is skippable):
+
+1. **High-level overview** — "Describe the deployment in a sentence or two (e.g., 'Single AKS cluster in Azure East US 2, connected to customer Databricks via Private Link'):" → `ARCH_OVERVIEW`
+2. **Component map** — "Which Kumo components are deployed? (e.g., controlplane, dataplane, temporal, gateway — comma-separated):" → `ARCH_COMPONENTS`
+3. **Data integrations** — "What data sources / platforms does this connect to? (e.g., Databricks, Snowflake, S3 — comma-separated):" → `ARCH_INTEGRATIONS`
+4. **Network topology** — "Describe the network setup (e.g., VNet peering, Private Link, NAT gateway, proxy). Paste multiline, then type END on a new line:" → `ARCH_NETWORK`
+5. **Known constraints** — "Any architecture constraints or gotchas? (e.g., no public egress, shared cluster with other tenants). Paste multiline, then type END on a new line:" → `ARCH_CONSTRAINTS`
+
+These values are used to generate `architecture.md` in Step 9.
+
+## Step 8: Repos
 
 Ask the user to add repos one at a time. For each entry:
 
@@ -133,15 +147,15 @@ For each repo:
 
 Collect all repos as a list of `(name, description)` pairs for CLAUDE.md and .gitignore generation.
 
-## Step 8: Generate Workspace Files
+## Step 9: Generate Workspace Files
 
 Create the full directory structure and files. Use the Write tool for each file.
 
-### 8a: `.gitignore`
+### 9a: `.gitignore`
 
 ```
 # Child git repos (tracked independently)
-<name>/ for each repo from Step 7
+<name>/ for each repo from Step 8
 
 # Claude Code local settings (not shared)
 .claude/settings.local.json
@@ -155,7 +169,7 @@ Create the full directory structure and files. Use the Write tool for each file.
 credentials/.env
 ```
 
-### 8b: `credentials/.env.example`
+### 9b: `credentials/.env.example`
 
 ```
 # <CUSTOMER_NAME> workspace credentials — DO NOT COMMIT
@@ -171,7 +185,7 @@ NOTION_API_KEY=
 NOTION_DATABASE_ID=31fcc5e93e38803dbb9bc6ad7897e885
 ```
 
-### 8c: `ops-guide/README.md`
+### 9c: `ops-guide/README.md`
 
 ```markdown
 # Ops Guide
@@ -195,7 +209,7 @@ _Add escalation paths and on-call info here._
 _Add links to architecture diagrams, design docs, onboarding decks, etc._
 ```
 
-### 8d: `.github/ISSUE_TEMPLATE/debug-log.yml`
+### 9d: `.github/ISSUE_TEMPLATE/debug-log.yml`
 
 ```yaml
 name: Debug Log
@@ -246,7 +260,7 @@ body:
       placeholder: e.g., https://github.com/kumo-ai/kumo/issues/12345
 ```
 
-### 8e: `.claude/settings.json`
+### 9e: `.claude/settings.json`
 
 ```json
 {
@@ -287,7 +301,7 @@ body:
 }
 ```
 
-### 8f: `.agents/scripts/sync-skills-catalog.py`
+### 9f: `.agents/scripts/sync-skills-catalog.py`
 
 Download the sync script directly from the catalog repo:
 ```bash
@@ -299,7 +313,7 @@ chmod +x .agents/scripts/sync-skills-catalog.py
 
 If the download fails (e.g. no network), tell the user they can copy it manually from an existing workspace or the `kumo-skills-catalog` repo later.
 
-### 8g: `.agents/skills/file-env-ticket/SKILL.md`
+### 9g: `.agents/skills/file-env-ticket/SKILL.md`
 
 Generate the file-env-ticket skill, parameterized with the workspace repo name (`kumo-ai/<CUSTOMER_SHORT>-workspace`):
 
@@ -379,10 +393,10 @@ Return the catalog issue URL to the user.
 - **Concise**: One problem per ticket.
 ```
 
-### 8h: `.claude/commands/onboard.md`
+### 9h: `.claude/commands/onboard.md`
 
 Generate an onboard skill tailored to this customer. Include steps for:
-1. Clone repos — check if each repo from Step 7 exists, offer to clone missing ones
+1. Clone repos — check if each repo from Step 8 exists, offer to clone missing ones
 2. Corporate proxy — only include if `HAS_PROXY` is yes
 3. Cloud auth — ask user to authenticate with their cloud provider (based on `CLOUD_PROVIDER`)
 4. Cluster access — run `bash runbook/k8s.sh` if it was generated
@@ -392,13 +406,13 @@ Generate an onboard skill tailored to this customer. Include steps for:
 
 Each step skippable. Finish with a summary checklist.
 
-### 8i: `.claude/commands/doctor.md`
+### 9i: `.claude/commands/doctor.md`
 
 Generate a doctor skill that checks whether the workspace is fully set up. It should verify each item from `/onboard` and report what's missing or broken.
 
 Checks to run (in order):
 
-1. **Child repos** — for each repo from Step 7, check if the directory exists. Report missing repos with the clone command to fix.
+1. **Child repos** — for each repo from Step 8, check if the directory exists. Report missing repos with the clone command to fix.
 2. **Corporate proxy** — only if `HAS_PROXY` is yes: check if `runbook/proxy.sh` exists and that `http_proxy` / `https_proxy` are set in the current environment. Report if proxy script is missing or env vars are unset.
 3. **Cloud auth** — based on `CLOUD_PROVIDER`:
    - Azure: run `az account show` and check exit code
@@ -429,14 +443,60 @@ Output format:
 <numbered list of commands to run for each FAIL, or "All checks passed!" if none>
 ```
 
-### 8j: `setup.sh`
+### 9j: `setup.sh`
 
 Generate a lightweight setup script for teammates joining an existing workspace. It should:
-1. Clone any missing child repos (from the URLs collected in Step 7) — for each, check if directory exists before cloning
+1. Clone any missing child repos (from the URLs collected in Step 8) — for each, check if directory exists before cloning
 2. Credentials section (y/N gate): copy `.env.example`, ask for Kumo/Notion keys
 3. Notion registration (if credentials present): ask the user for stage (POC / PROD / OTHERS), then create entry with customer name, repo URL, selected stage, and Deployment type
 
-### 8k: `CLAUDE.md`
+### 9k: `architecture.md`
+
+Generate only if the user provided architecture information in Step 7. Structure:
+
+```markdown
+# <CUSTOMER_NAME> — Deployment Architecture
+
+<ARCH_OVERVIEW — if provided, otherwise omit this paragraph>
+
+## Components
+
+<bulleted list from ARCH_COMPONENTS, or "TBD" if skipped>
+
+## Data Integrations
+
+<bulleted list from ARCH_INTEGRATIONS, or "TBD" if skipped>
+
+## Network Topology
+
+<ARCH_NETWORK content, or "TBD" if skipped>
+
+## Constraints
+
+<ARCH_CONSTRAINTS content, or omit section entirely if skipped>
+```
+
+If the user skipped Step 7 entirely, still generate a minimal `architecture.md` with placeholder sections:
+
+```markdown
+# <CUSTOMER_NAME> — Deployment Architecture
+
+_Fill in deployment details as you learn about this environment._
+
+## Components
+
+- TBD
+
+## Data Integrations
+
+- TBD
+
+## Network Topology
+
+TBD
+```
+
+### 9l: `CLAUDE.md`
 
 Generate the full CLAUDE.md assembled from all collected values. Structure:
 
@@ -446,8 +506,12 @@ Generate the full CLAUDE.md assembled from all collected values. Structure:
 New here? Run `/onboard` to get set up interactively.
 Something not working? Run `/doctor` to check what's missing.
 
+## Architecture
+
+See [architecture.md](architecture.md) for deployment architecture, components, network topology, and integration details. Read it before making infrastructure changes.
+
 ## Workspace Layout
-<tree showing credentials/, ops-guide/, runbook/, setup.sh, and all repos from Step 7>
+<tree showing credentials/, ops-guide/, runbook/, architecture.md, setup.sh, and all repos from Step 8>
 
 ## Repos
 <bullet for each repo: **name** — description>
@@ -482,15 +546,15 @@ This repo's GitHub Issues (`kumo-ai/<CUSTOMER_SHORT>-workspace`) serves as a sea
 <same as current, generic>
 ```
 
-### 8l: Symlinks
+### 9m: Symlinks
 
 Create:
 - `AGENTS.md -> CLAUDE.md`
 - `README.md -> CLAUDE.md`
-- `.claude/commands/doctor.md` (generated directly in Step 8i)
+- `.claude/commands/doctor.md` (generated directly in Step 9i)
 - `.claude/commands/file-env-ticket.md -> ../../.agents/skills/file-env-ticket/SKILL.md`
 
-## Step 9: Credentials
+## Step 10: Credentials
 
 Ensure `credentials/.env` exists (copy from `.env.example`).
 
@@ -506,15 +570,15 @@ Other credentials are optional:
 
 Write values into `credentials/.env`.
 
-## Step 10: Ops Contacts
+## Step 11: Ops Contacts
 
 Ask: "Fill in ops contacts now? (yes/skip)"
 
 If yes, ask for each contact area (who + channel), update `ops-guide/README.md`.
 
-## Step 11: Notion Registration
+## Step 12: Notion Registration
 
-Since `NOTION_API_KEY` was configured in Step 9, ask: "Register this workspace in the VPC Customers Notion database? (yes/skip)"
+Since `NOTION_API_KEY` was configured in Step 10, ask: "Register this workspace in the VPC Customers Notion database? (yes/skip)"
 
 If yes:
 1. Ask: "What stage is this customer in? (POC / PROD / OTHERS)" → `STAGE`
@@ -538,7 +602,7 @@ curl -s -X POST https://api.notion.com/v1/pages \
 
 Report the Notion page URL.
 
-## Step 12: Skills Catalog
+## Step 13: Skills Catalog
 
 Ask: "Set up the shared skills catalog? (yes/skip)"
 
@@ -554,7 +618,7 @@ If yes:
 5. If they provide names, run: `python3 .agents/scripts/sync-skills-catalog.py --add <name1> <name2> ...`
 6. If they say 'all', install every skill listed by `--list`.
 
-## Step 13: Initial Commit
+## Step 14: Initial Commit
 
 Ask: "Create initial commit and push? (yes/skip)"
 
@@ -563,7 +627,7 @@ If yes:
 - Commit with message: `Initialize <CUSTOMER_SHORT> VPC workspace`
 - Push to origin if remote is configured
 
-## Step 14: Summary
+## Step 15: Summary
 
 Print a summary showing:
 - What was configured (with values)
