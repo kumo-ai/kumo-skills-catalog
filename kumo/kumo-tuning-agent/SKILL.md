@@ -1,7 +1,7 @@
 ---
 name: kumo-tuning-agent
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
 description: Use when a coding agent needs to tune and run an end-to-end Kumo workflow with the Kumo SDK, including data connection, graph creation, predictive query validation, training, model-plan iteration, prediction, and reporting concrete outputs.
 allowed-tools: Bash Read Write Edit Grep Glob Agent WebFetch
 ---
@@ -25,9 +25,9 @@ Use this skill when the user wants an agent to execute a complete Kumo workflow 
 4. Define tables and confirm primary keys, foreign keys, and time columns.
 5. Build a graph and validate it.
 6. Write a predictive query and validate it.
-7. Generate a training table.
-8. Suggest a model plan, run training, inspect metrics, and iterate when needed.
-9. Generate a prediction table and run predictions.
+7. Generate a training table and immediately print the Kumo UI tracking URL.
+8. Suggest a model plan, run training, and immediately print the Kumo UI tracking URL.
+9. Generate a prediction table, run predictions, and immediately print the Kumo UI tracking URL for the prediction job.
 10. Report metrics, output locations, sample rows, assumptions, and commands run.
 
 ## End-To-End Pattern
@@ -62,11 +62,13 @@ pquery.validate(verbose=True)
 
 plan = pquery.suggest_training_table_plan(run_mode=RunMode.FAST)
 train_table_job = pquery.generate_training_table(plan, non_blocking=True)
+print(f"Training table job URL: {train_table_job.status().tracking_url}")
 train_table = train_table_job.attach()
 
 model_plan = pquery.suggest_model_plan(run_mode=RunMode.FAST)
 trainer = kumoai.Trainer(model_plan)
 training_job = trainer.fit(graph, train_table, non_blocking=True)
+print(f"Training job URL: {training_job.tracking_url}")
 result = training_job.attach()
 
 pred_plan = PredictionTableGenerationPlan()
@@ -82,6 +84,7 @@ prediction_job = trainer.predict(
     ),
     non_blocking=True,
 )
+print(f"Prediction job URL: {prediction_job.tracking_url}")
 predictions = prediction_job.attach()
 ```
 
@@ -91,8 +94,22 @@ predictions = prediction_job.attach()
 - Always inspect schemas first with `column_dict`, table metadata, or sample rows.
 - Do not build a graph until PK and FK columns are confirmed.
 - Always run `table.validate()`, `graph.validate()`, and `pquery.validate(verbose=True)`.
+- When starting training table generation, print `train_table_job.status().tracking_url` before attaching so the user can follow it in the UI.
+- When starting training, print `training_job.tracking_url` before attaching so the user can follow it in the UI.
+- When starting batch prediction, print `prediction_job.tracking_url` before attaching so the user can follow it in the UI.
 - Do not claim success unless both training and prediction completed and you can show metrics and sample outputs.
 - If a critical relationship or timestamp is ambiguous, ask only for the minimum missing clarification.
+
+## Job Tracking URLs
+
+Verified against the installed `kumoai` SDK surface:
+
+- Training table generation job: `train_table_job.status().tracking_url`
+- Training job: `training_job.tracking_url`
+- Batch prediction job: `prediction_job.tracking_url`
+
+Print those URLs to the user immediately after job creation and before calling
+`.attach()` or waiting on the result.
 
 ## SDK Initialization
 
