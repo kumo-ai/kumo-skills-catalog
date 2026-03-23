@@ -248,7 +248,11 @@ _Add escalation paths and on-call info here._
 _Add links to architecture diagrams, design docs, onboarding decks, etc._
 ```
 
-### 10d: `.github/ISSUE_TEMPLATE/debug-log.yml`
+### 10d: `.github/ISSUE_TEMPLATE/`
+
+Generate all four issue templates and a config file. Each template uses the YAML form format with `<CUSTOMER_NAME>` in the Environment dropdown.
+
+#### `debug-log.yml`
 
 ```yaml
 name: Debug Log
@@ -297,6 +301,205 @@ body:
     attributes:
       label: Upstream Issue
       placeholder: e.g., https://github.com/kumo-ai/kumo/issues/12345
+```
+
+#### `bug-report.yml`
+
+```yaml
+name: Bug Report
+description: Report a bug in the customer environment
+labels: [bug]
+body:
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - <CUSTOMER_NAME>
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Desired Resolution Timeframe
+      options:
+        - ASAP
+        - 3 business days
+        - 5 business days
+        - Can wait longer
+    validations:
+      required: true
+  - type: input
+    id: component
+    attributes:
+      label: Component
+      description: Which part of the system
+      placeholder: e.g., egress, controlplane, dataplane, temporal, databricks
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Kumo Version
+      description: Image tag or version running in the environment
+      placeholder: e.g., 0.14.1-hotfix.3
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        What is happening? What is the expected behavior? What is the extent of impact?
+      placeholder: |
+        What is happening:
+        Expected behavior:
+        Impact:
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions or commands to reproduce the issue.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Logs, error messages, screenshots, config snippets. Redact secrets and customer-specific values.
+  - type: input
+    id: upstream-issue
+    attributes:
+      label: Upstream Issue
+      description: Link to the kumo-ai/kumo issue if one was filed
+      placeholder: e.g., https://github.com/kumo-ai/kumo/issues/12345
+```
+
+#### `feature-request.yml`
+
+```yaml
+name: Feature Request
+description: Request a feature or change for this deployment
+labels: [feature]
+body:
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - <CUSTOMER_NAME>
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the proposed feature or change in detail. Include use cases or user stories.
+    validations:
+      required: true
+  - type: textarea
+    id: benefit
+    attributes:
+      label: Expected Benefit
+      description: How will this improve the deployment? (e.g., reliability, efficiency, unblock a workflow)
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives / Workarounds
+      description: Any alternatives or workarounds that have been considered.
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - High - Critical for upcoming milestone
+        - Medium - Important but can wait
+        - Low - Nice to have
+    validations:
+      required: true
+  - type: input
+    id: upstream-issue
+    attributes:
+      label: Upstream Issue
+      description: Link to a related kumo-ai/kumo issue or feature request if one exists
+      placeholder: e.g., https://github.com/kumo-ai/kumo/issues/12345
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Slack threads, customer requests, screenshots, or other context.
+```
+
+#### `incident-action-item.yml`
+
+```yaml
+name: Incident Action Item
+description: Track an action item from an incident post-mortem
+labels: [incident]
+body:
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - <CUSTOMER_NAME>
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: incident-date
+    attributes:
+      label: Incident Date
+      description: When did the incident occur?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Kumo Version at Time of Incident
+      placeholder: e.g., 0.14.1-hotfix.3
+  - type: input
+    id: post-mortem-doc
+    attributes:
+      label: Post-Mortem Document Link
+      description: Link to the post-mortem doc (Notion, Google Doc, etc.)
+  - type: textarea
+    id: description
+    attributes:
+      label: Action Item Description
+      description: What needs to be done and why? Provide enough context for someone unfamiliar with the incident.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested-implementation
+    attributes:
+      label: Suggested Implementation
+      description: Ideas for how this action item could be implemented.
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: What benefits will this bring? How will it help prevent similar incidents?
+    validations:
+      required: true
+  - type: input
+    id: upstream-issue
+    attributes:
+      label: Upstream Issue
+      description: Link to a related kumo-ai/kumo issue if one exists
+      placeholder: e.g., https://github.com/kumo-ai/kumo/issues/12345
+```
+
+#### `config.yml`
+
+```yaml
+blank_issues_enabled: true
+contact_links:
+  - name: Kumo Product Issues
+    url: https://github.com/kumo-ai/kumo/issues
+    about: For bugs or features in the core Kumo product, file in the main repo instead.
 ```
 
 ### 10e: `.claude/settings.json`
