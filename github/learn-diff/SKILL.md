@@ -87,7 +87,7 @@ Output a structured summary:
 
 Write a 1-line description per file based on the diff hunks and filenames.
 
-### Step 5 — Process Inline Comments
+### Step 5 — Process Inline Comments & Backward Compatibility
 
 If the user left inline comments on the PR (from Step 3 data):
 - Treat **each comment** as a question from the user.
@@ -96,6 +96,29 @@ If the user left inline comments on the PR (from Step 3 data):
 
 If there are **no** inline comments:
 - Use `AskUserQuestion` to ask: "No inline comments found. What part of this PR would you like to understand?"
+
+#### Backward Compatibility Check
+
+For every changed file with behavioral code changes, evaluate backward compatibility and flag risks. Check for:
+
+- **Public API changes** — renamed, removed, or re-typed functions, methods, classes, or endpoints that external callers may depend on.
+- **Data format / schema changes** — altered serialization formats, database schemas, config file structures, or wire protocols that could break existing consumers or stored data.
+- **Default behavior changes** — changed default values, argument ordering, or implicit behaviors that existing callers rely on without explicit arguments.
+- **Dependency contract changes** — bumped dependency versions, removed transitive dependencies, or changed minimum version requirements.
+- **Feature removal or deprecation** — removed flags, environment variables, CLI options, or config keys without a migration path.
+
+Output a summary section:
+
+```
+## Backward Compatibility
+- **Risk level:** None | Low | Medium | High
+- **Findings:**
+  - (list each finding, or "No backward compatibility issues detected.")
+- **Recommendations:**
+  - (migration steps, deprecation warnings, or versioning advice if applicable)
+```
+
+Skip this check for docs-only or test-only changes.
 
 ### Step 6 — ASCII Workflow Diagrams
 
