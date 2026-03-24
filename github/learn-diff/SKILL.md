@@ -87,7 +87,28 @@ Output a structured summary:
 
 Write a 1-line description per file based on the diff hunks and filenames.
 
-### Step 5 — Process Inline Comments & Backward Compatibility
+### Step 5 — Approach Assessment
+
+Before diving into code details, evaluate whether the PR's approach is sound. Keep this step **precise and concise** — a few sentences per point, not an essay.
+
+1. **Identify the problem** — From the PR description, linked issues, and the diff, state the core problem being solved in 1–2 sentences.
+2. **Evaluate the approach** — Is this a proper fix or a workaround? Does it address the root cause or just a symptom?
+3. **Consider alternatives** — Are there simpler, more robust, or more idiomatic approaches? Only mention alternatives that are meaningfully better — do not list alternatives for the sake of it.
+4. **Surface trade-offs** — Note any trade-offs the approach introduces (e.g., performance vs. readability, scope of change vs. risk).
+
+Output format:
+
+```
+## Approach Assessment
+**Problem:** (1–2 sentence problem statement)
+**Approach:** (what the PR does and whether it addresses the root cause)
+**Alternatives:** (meaningfully better options, or "None — this approach is sound.")
+**Trade-offs:** (key trade-offs, or "None of note.")
+```
+
+Skip this step for trivial changes (typo fixes, docs updates, dependency bumps).
+
+### Step 6 — Process Inline Comments & Backward Compatibility
 
 If the user left inline comments on the PR (from Step 3 data):
 - Treat **each comment** as a question from the user.
@@ -120,7 +141,7 @@ Output a summary section:
 
 Skip this check for docs-only or test-only changes.
 
-### Step 6 — ASCII Workflow Diagrams
+### Step 7 — ASCII Workflow Diagrams
 
 Identify the 1–2 most critical control-flow changes in the PR. For each, generate a side-by-side BEFORE / AFTER ASCII diagram using box-drawing characters (`┌ ┐ └ ┘ │ ─ ├ ┤ ┬ ┴ ┼ ▼ ▶`).
 
@@ -143,7 +164,7 @@ Constraints:
 - Output directly in conversation — do not write to a file.
 - Skip this step if the PR has no meaningful control-flow changes (e.g., config or docs only).
 
-### Step 7 — Reproducible Demo Script
+### Step 8 — Reproducible Demo Script
 
 If the PR contains behavioral code changes (not config/docs-only):
 
@@ -167,7 +188,7 @@ If the PR contains behavioral code changes (not config/docs-only):
 
 Skip this step if the PR is config-only, docs-only, or the changes cannot be meaningfully simulated in a standalone script.
 
-### Step 8 — Follow-Up
+### Step 9 — Follow-Up
 
 Use `AskUserQuestion` to ask:
 
