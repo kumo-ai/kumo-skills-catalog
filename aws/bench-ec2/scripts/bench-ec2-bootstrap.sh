@@ -49,9 +49,11 @@ if ! mountpoint -q "$DATA_MNT"; then
     UUID=$(blkid -s UUID -o value "$DEV")
     grep -q "$UUID" /etc/fstab || echo "UUID=$UUID $DATA_MNT xfs defaults,nofail 0 2" >> /etc/fstab
     mount -a
-    chown "$TARGET_USER:$TARGET_USER" "$DATA_MNT"
   fi
 fi
+# Reconcile ownership every run — the original mount may have been performed
+# before this step existed, leaving /mnt/data owned by root.
+[[ -d "$DATA_MNT" ]] && chown "$TARGET_USER:$TARGET_USER" "$DATA_MNT"
 
 # --- authorize extra SSH keys for $TARGET_USER ---
 if [[ -n "$EXTRA_AUTHORIZED_KEYS" ]]; then

@@ -108,7 +108,12 @@ cmd_bootstrap() {
   # on the EC2 key pair's private half being installed locally.
   local extra_keys=""
   [[ -f "$HOME/.ssh/id_ed25519.pub" ]] && extra_keys="$(cat "$HOME/.ssh/id_ed25519.pub")"
-  local wrapped_script; wrapped_script="export EXTRA_AUTHORIZED_KEYS=$(printf %q "$extra_keys")"$'\n'"$(cat "$boot")"
+  # SSM AWS-RunShellScript runs commands under /bin/sh (dash on Ubuntu),
+  # which doesn't understand `set -o pipefail`. Base64-encode the bash
+  # script and decode + execute under bash on the remote.
+  local script_body; script_body="export EXTRA_AUTHORIZED_KEYS=$(printf %q "$extra_keys")"$'\n'"$(cat "$boot")"
+  local b64; b64=$(printf '%s' "$script_body" | base64 | tr -d '\n')
+  local wrapped_script="echo $b64 | base64 -d | bash"
   local payload; payload=$(mktemp)
   jq -n --arg script "$wrapped_script" \
     '{InstanceIds:[$iid], DocumentName:"AWS-RunShellScript", Comment:"diskgraph bench bootstrap", TimeoutSeconds:3600, Parameters:{commands:[$script], executionTimeout:["3600"]}}' \
