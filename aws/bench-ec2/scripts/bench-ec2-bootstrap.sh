@@ -86,7 +86,7 @@ if [ ! -d "$HOME/.venv-bench" ]; then
   python3 -m venv "$HOME/.venv-bench"
 fi
 "$HOME/.venv-bench/bin/pip" install --upgrade pip
-"$HOME/.venv-bench/bin/pip" install pyarrow
+"$HOME/.venv-bench/bin/pip" install pyarrow numpy
 grep -q "venv-bench/bin/activate" "$HOME/.bashrc" || echo 'source "$HOME/.venv-bench/bin/activate"' >> "$HOME/.bashrc"
 EOF
 chmod +x "$USER_SCRIPT"
