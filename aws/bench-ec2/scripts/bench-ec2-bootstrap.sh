@@ -105,6 +105,13 @@ fi
 "$HOME/.venv-bench/bin/pip" install --upgrade pip
 "$HOME/.venv-bench/bin/pip" install pyarrow numpy polars scipy
 grep -q "venv-bench/bin/activate" "$HOME/.bashrc" || echo 'source "$HOME/.venv-bench/bin/activate"' >> "$HOME/.bashrc"
+
+# Ensure SSH login shells pick up ~/.bashrc (Ubuntu's default cloud-image
+# user has no ~/.bash_profile, so login shells skip ~/.bashrc and the venv
+# never activates). Standard idiom: bash_profile sources bashrc.
+if [ ! -f "$HOME/.bash_profile" ] || ! grep -q "bashrc" "$HOME/.bash_profile"; then
+  printf '# Source ~/.bashrc for login shells (e.g. SSH).\nif [ -f "$HOME/.bashrc" ]; then . "$HOME/.bashrc"; fi\n' >> "$HOME/.bash_profile"
+fi
 EOF
 chmod +x "$USER_SCRIPT"
 chown "$TARGET_USER:$TARGET_USER" "$USER_SCRIPT"
