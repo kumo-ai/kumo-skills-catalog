@@ -40,15 +40,32 @@ if ! command -v gh >/dev/null 2>&1; then
 fi
 
 # --- mount instance-store NVMe (single-disk XFS on the first ephemeral) ---
+# Identify ephemerals by NVMe model — name-based regexes (e.g. ^nvme[12]n1$)
+# are unreliable because device naming order varies across boots and can
+# include the EBS root. Instance store reports model
+# "Amazon EC2 NVMe Instance Storage"; EBS reports "Amazon Elastic Block Store".
 if ! mountpoint -q "$DATA_MNT"; then
-  EPHEMERALS=( $(lsblk -d -n -o NAME,TYPE | awk '$2=="disk" && $1 ~ /^nvme[12]n1$/ {print "/dev/"$1}') )
+  EPHEMERALS=( $(lsblk -d -n -o NAME,MODEL | awk '/Amazon EC2 NVMe Instance Storage/ {print "/dev/"$1}') )
   if [[ ${#EPHEMERALS[@]} -ge 1 ]]; then
     DEV="${EPHEMERALS[0]}"
+    # Drop stale /mnt/data fstab entries — instance-store UUIDs reset on each
+    # stop/start, so a re-bootstrap must replace, not append, the entry.
+    sed -i.bak "\| $DATA_MNT |d" /etc/fstab
     blkid "$DEV" >/dev/null 2>&1 || mkfs.xfs -f "$DEV"
     mkdir -p "$DATA_MNT"
+    # Refuse to mount over a non-empty target — would silently shadow data.
+    if [[ -n "$(ls -A "$DATA_MNT" 2>/dev/null)" ]]; then
+      echo "FATAL: $DATA_MNT is non-empty; refusing to mount over existing data." >&2
+      echo "Inspect contents and 'rm -rf $DATA_MNT/*' before re-running bootstrap." >&2
+      exit 1
+    fi
     UUID=$(blkid -s UUID -o value "$DEV")
-    grep -q "$UUID" /etc/fstab || echo "UUID=$UUID $DATA_MNT xfs defaults,nofail 0 2" >> /etc/fstab
-    mount -a
+    echo "UUID=$UUID $DATA_MNT xfs defaults,nofail 0 2" >> /etc/fstab
+    mount "$DATA_MNT"
+    mountpoint -q "$DATA_MNT" || { echo "FATAL: $DATA_MNT failed to mount" >&2; exit 1; }
+  else
+    echo "FATAL: no instance-store NVMe found (lsblk MODEL match for 'Amazon EC2 NVMe Instance Storage' returned nothing)" >&2
+    exit 1
   fi
 fi
 # Reconcile ownership every run — the original mount may have been performed
